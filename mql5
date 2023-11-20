@@ -1,0 +1,83 @@
+
+//+------------------------------------------------------------------+
+//|                                                  Golden Waves MT5 |
+//|                        Copyright © 2021, Forex Robot Easy Team   |
+//|                                                   forexroboteasy.com |
+//+------------------------------------------------------------------+
+
+// Define constants
+#define INITIAL_DEPOSIT 250
+#define PROFIT_TARGET 100
+#define STOP_LOSS 50
+
+//+------------------------------------------------------------------+
+//| Expert initialization function                                   |
+//+------------------------------------------------------------------+
+int OnInit()
+{
+    // Set initial deposit
+    AccountInfoDouble(ACCOUNT_MARGIN_INITIAL, INITIAL_DEPOSIT);
+
+    // Print initialization message
+    Print('Golden Waves MT5 initialized with initial deposit of $', INITIAL_DEPOSIT);
+
+    return(INIT_SUCCEEDED);
+}
+
+//+------------------------------------------------------------------+
+//| Expert start function                                             |
+//+------------------------------------------------------------------+
+void OnTick()
+{
+    // Check available funds
+    double availableFunds = AccountInfoDouble(ACCOUNT_BALANCE);
+
+    // Check if available funds are sufficient to start trading
+    if (availableFunds < INITIAL_DEPOSIT)
+    {
+        Print('Insufficient funds to start trading with a minimal initial deposit of $', INITIAL_DEPOSIT);
+        return;
+    }
+
+    // Calculate position size based on available funds
+    double lotSize = availableFunds / 10000;
+
+    // Check if there is an existing position
+    if (PositionsTotal() > 0)
+    {
+        // Close existing position if profit target or stop loss is reached
+        for (int i = 0; i < PositionsTotal(); i++)
+        {
+            if (PositionSelect(i))
+            {
+                double positionProfit = PositionGetDouble(POSITION_PROFIT);
+                if (positionProfit >= PROFIT_TARGET || positionProfit <= -STOP_LOSS)
+                {
+                    Print('Closing position with profit of $', positionProfit);
+                    PositionClose(i);
+                }
+            }
+        }
+    }
+    else
+    {
+        // Open new position
+        if (lotSize > 0)
+        {
+            Print('Opening new position with lot size of ', lotSize);
+            OrderSend(Symbol(), OP_BUY, lotSize, Ask, 0, 0, 0, 'Golden Waves MT5', 0, 0, Green);
+        }
+    }
+}
+
+//+------------------------------------------------------------------+
+//| Expert deinitialization function                                 |
+//+------------------------------------------------------------------+
+void OnDeinit(const int reason)
+{
+    // Print deinitialization message
+    Print('Golden Waves MT5 deinitialized');
+
+    // Reset account margin to its default value
+    AccountInfoDouble(ACCOUNT_MARGIN_INITIAL, 0);
+}
